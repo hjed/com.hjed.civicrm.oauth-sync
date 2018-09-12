@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <extension key="com.hjed.civicrm.oauth-sync" type="module">
   <file>oauth_sync</file>
-  <name>FIXME</name>
-  <description>FIXME</description>
+  <name>OAuth Sync Utility</name>
+  <description>A set of utilities to enable other plugins to sync users using oauth based apis</description>
   <license>AGPL-3.0</license>
   <maintainer>
     <author>hjed</author>
@@ -15,7 +15,7 @@
     <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
   </urls>
   <releaseDate>2018-09-12</releaseDate>
-  <version>1.0</version>
+  <version>0.0.1</version>
   <develStage>alpha</develStage>
   <compatibility>
     <ver>4.7</ver>

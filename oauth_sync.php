@@ -3,6 +3,9 @@
 require_once 'oauth_sync.civix.php';
 use CRM_OauthSync_ExtensionUtil as E;
 
+require_once 'CRM/OauthSync/GenerateSettings.php';
+require_once 'CRM/OauthSync/Form/ConnectionSettings.php';
+
 /**
  * Implements hook_civicrm_config().
  *
