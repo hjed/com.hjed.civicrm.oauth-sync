@@ -1,3 +1,9 @@
 <?xml version="1.0"?>
 <menu>
+  <item>
+    <path>civicrm/oauth-sync/callback</path>
+    <page_callback>CRM_OauthSync_Page_OAuthCallback</page_callback>
+    <title>OAuthCallback</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
 </menu>

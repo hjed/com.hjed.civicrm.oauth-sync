@@ -5,6 +5,7 @@ use CRM_OauthSync_ExtensionUtil as E;
 
 require_once 'CRM/OauthSync/GenerateSettings.php';
 require_once 'CRM/OauthSync/Form/ConnectionSettings.php';
+require_once 'CRM/CRM_OauthSync_OAuthHelper.php';
 
 /**
  * Implements hook_civicrm_config().
