@@ -14,6 +14,7 @@ class CRM_OAuthSync_Settings {
    */
   public static function generateSettings($prefix, $connection_name) {
     return array(
+      /* OAuth Application Credentials */
       $prefix . '_client_id' => array(
         'group_name' => $connection_name . ' Settings',
         'group' => $prefix,
@@ -48,6 +49,7 @@ class CRM_OAuthSync_Settings {
         ),
         'quick_form_type' => 'Element',
       ),
+      /* OAuth Token Related Settings */
       $prefix . '_token' => array(
         'group_name' => $connection_name . ' Token Control',
         'group' => $prefix . '_token',
@@ -133,6 +135,7 @@ class CRM_OAuthSync_Settings {
         'help_text' => '',
         'default' => false,
       ),
+      /* Sync Related Settings */
     );
   }
 }

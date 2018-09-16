@@ -88,15 +88,35 @@ the plugin allowing it to complete the final step in the oauth flow and retrieve
 ### Hooks
 The plugin provides a number of additional CiviCRM hooks that can be used to manage your connection. 
 
+(This is inspired by [nz.co.fuzion.accountsync](https://github.com/eileenmcnaughton/nz.co.fuzion.accountsync/))
 #### civicrm_oauthsync_consent_success
 
 Called on the successful completion of the consent flow. Plugins may want to handle this hook to provide functionality
 like selecting the correct site to sync with (if the api you are using supports multiple sites/accounts/installations/etc).
 
+### Option Groups
+
+Plugins must define the following option groups. 
+
+#### {prefix}_sync_group_options
+
+Defines the available groups in the remote system that can be synced too.
+
+The `data_type` should be `String`. E.g. if implemented in auto_install.xml
+
+      <OptionGroups>
+        <OptionGroup>
+          <name>my_prefix_sync_groups_options</name>
+          <title>My Connection Groups</title>
+          <data_type>String</data_type>
+          <is_reserved>1</is_reserved>
+          <is_active>1</is_active>
+        </OptionGroup>
+      </OptionGroups>
+      
 
 
 
-(This is inspired by [nz.co.fuzion.accountsync](https://github.com/eileenmcnaughton/nz.co.fuzion.accountsync/))
 
 ## Known Issues
 

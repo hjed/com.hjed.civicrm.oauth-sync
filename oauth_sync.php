@@ -138,6 +138,45 @@ function oauth_sync_civicrm_entityTypes(&$entityTypes) {
   _oauth_sync_civix_civicrm_entityTypes($entityTypes);
 }
 
+/**
+ * Implements hook_civicrm_fieldOptions()
+ *
+ * Used to keep the list of sync groups up to date
+ *
+ * @param string $entity the name of the entity
+ * @param string $field the field we are looking up
+ * @param array $options the list of options as a reference to modify
+ * @param array $params params sent to the lookup field
+ */
+function oauth_sync_civicrm_fieldOptions($entity, $field, &$options, $params) {
+//  print_r($field);
+//  if($entity == 'Group') {
+//    print $field;
+//    print "\n";
+//    print_r($params);
+//    print "\n";
+//    print_r($options);
+//    print "\n";
+//    CRM_Core_BAO_CustomField::getOptionGroupDefault()
+//    print CRM_Core_BAO_CustomField::getCustomFieldID("JIRA_Groups", "JIRA_Sync_Settings");
+//    print "\n";
+//  }
+//  $field_id = CRM_Core_BAO_CustomField::getCustomFieldID($field);
+//  $field = CRM_Core_BAO_CustomField::getFieldObject($field_id);
+//  print_r($field);
+//  print_r($options);
+//  if ($entity == 'Group' && (substr($field,0, 6) == 'custom')) {
+//    if($field->option_group_id == 'jira_sync_group_options') {
+//      print_r($field);
+//      $field_id = CRM_Core_BAO_CustomField::getCustomFieldID($field);
+//      $field = CRM_Core_BAO_CustomField::getFieldObject($field_id);
+//      print_r($field);
+//      print_r($options);
+//      print 'aaa';
+//    }
+//  }
+}
+
 // --- Functions below this ship commented out. Uncomment as required. ---
 
 /**
@@ -165,3 +204,22 @@ function oauth_sync_civicrm_navigationMenu(&$menu) {
   ));
   _oauth_sync_civix_navigationMenu($menu);
 } // */
+
+/**
+ * Implementation of hook_civicrm_pre
+ *
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_pre
+ */
+function oauth_sync_civicrm_pre( $op, $objectName, $id, &$params ) {
+  // TODO: handle user deletion (plugins must handle their own email matching changes)
+}
+
+/**
+ * Implementation of hook_civicrm_post
+ *
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_post
+ */
+function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
+  // TODO: handle adding or removing a user from a group in civicrm
+}
+
