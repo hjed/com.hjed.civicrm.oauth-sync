@@ -12,15 +12,18 @@ class CRM_OauthSync_OAuthHelper {
    * @return CRM_OauthSync_OAuthHelper the helper
    */
   public static function getHelper($prefix) {
-    return self::getHelperArray($prefix);
+    //print_r(self::getHelperArray());
+    //print_r($prefix);
+    return self::getHelperArray()[$prefix];
   }
 
+  static $helperArray = array();
+
   private static function getHelperArray() {
-    static $helperArray;
-    if($helperArray == null) {
-      $helperArray = array();
+    if(self::$helperArray == null) {
+      self::$helperArray = array();
     }
-    return $helperArray;
+    return self::$helperArray;
   }
 
 
@@ -42,8 +45,8 @@ class CRM_OauthSync_OAuthHelper {
   function __construct($prefix, $tokenUrl) {
     $this->tokenUrl = $tokenUrl;
     $this->settingsPrefix = $prefix;
-    self::getHelperArray()[$prefix] = $this;
-    print_r(self::getHelperArray());
+    self::$helperArray[$prefix] = $this;
+//    print_r(self::getHelperArray());
   }
 
   /**
@@ -76,7 +79,7 @@ class CRM_OauthSync_OAuthHelper {
 
     $this->setPrefixSetting('oauth_state', $stateKey);
 
-    return $stateKey;
+    return $this->settingsPrefix . '!' . $stateKey;
   }
 
   /**
@@ -98,9 +101,8 @@ class CRM_OauthSync_OAuthHelper {
    * Redirects to $return_uri if successful
    *
    * @param string $code the code to use for the exchange
-   * @param string $return_path the civicrm path to return to
    */
-  public function doOAuthCodeExchange($code, $return_path) {
+  public function doOAuthCodeExchange($code) {
     $client_id = $this->getPrefixSetting('client_id');
     $client_secret = $this->getPrefixSetting('secret');
     $redirect_url = self::generateRedirectUrl();
@@ -133,7 +135,7 @@ class CRM_OauthSync_OAuthHelper {
       echo 'Request Error:' . curl_error($ch);
       // TODO: handle this better
     } else {
-        $return_path = CRM_Utils_System::url($return_path, 'reset=1', TRUE, NULL, FALSE, FALSE);
+        $return_path = CRM_Utils_System::url($this->getPrefixSetting('callback_return_path'), 'reset=1', TRUE, NULL, FALSE, FALSE);
         header("Location: " . $return_path);
         die();
     }
@@ -189,6 +191,14 @@ class CRM_OauthSync_OAuthHelper {
       )
     );
 
+  }
+
+  /**
+   * Sets the return path for the oauth consent for the given prefix
+   * @param $path the civicrm path to return to
+   */
+  public function setOauthCallbackReturnPath($path) {
+    $this->setPrefixSetting('callback_return_path', $path);
   }
 
 }
