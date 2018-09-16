@@ -135,9 +135,34 @@ class CRM_OauthSync_OAuthHelper {
       echo 'Request Error:' . curl_error($ch);
       // TODO: handle this better
     } else {
+
+      $response_json = json_decode($response, true);
+      if(in_array("error", $response_json)) {
+        // TODO: handle this better
+        echo "<br/><br/>Error\n\n";
+        echo $response_json["error_description"];
+      } else {
+        $this->parseOAuthTokenResponse($response_json);
+
+
+        CRM_Utils_Hook::singleton()->invoke(
+          array('prefix'),
+          $this->settingsPrefix,
+          CRM_Utils_Hook::$_nullObject,
+          CRM_Utils_Hook::$_nullObject,
+          CRM_Utils_Hook::$_nullObject,
+          CRM_Utils_Hook::$_nullObject,
+          CRM_Utils_Hook::$_nullObject,
+          'civicrm_oauthsync_consent_success'
+        );
+
+        $this->setPrefixSetting('connected', true);
+
         $return_path = CRM_Utils_System::url($this->getPrefixSetting('callback_return_path'), 'reset=1', TRUE, NULL, FALSE, FALSE);
         header("Location: " . $return_path);
         die();
+      }
+
     }
 
   }
@@ -180,14 +205,14 @@ class CRM_OauthSync_OAuthHelper {
    * refreshes the token if it has expired
    * @param $curl_request
    */
-  private function addAccessToken(&$curl_request) {
+  public function addAccessToken(&$curl_request) {
     // TODO: check expiry and refresh
     curl_setopt(
       $curl_request,
       CURLOPT_HTTPHEADER,
       array(
         'Authorization: Bearer ' . $this->getPrefixSetting('token'),
-        'Accept: application/json'
+        'Accept: application/json',
       )
     );
 

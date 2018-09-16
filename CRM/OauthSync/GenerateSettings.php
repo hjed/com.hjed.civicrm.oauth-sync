@@ -133,19 +133,6 @@ class CRM_OAuthSync_Settings {
         'help_text' => '',
         'default' => false,
       ),
-      $prefix . '_cloud_id' => array(
-        'group_name' => $connection_name . ' Token Control',
-        'group' => $prefix . '_token',
-        'name' => $prefix . '_cloud_id',
-        'type' => 'String',
-        'add' => '4.4',
-        'is_domain' => 1,
-        'is_contact' => 0,
-        'description' => $connection_name . ' "cloudid" for the domain we are connected to',
-        'title' => 'JIRA CloudID',
-        'help_text' => '',
-        'default' => false,
-      ),
     );
   }
 }
