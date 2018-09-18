@@ -1,11 +1,29 @@
 <?php
+
 /**
  * Helper class for handling operations on users and groups
  */
-
 class CRM_OauthSync_SyncHelper {
 
   private $prefix;
+
+  private static $singletons;
+
+  /**
+   * Gets an instance of a Sync Helper for the given prefix
+   * @param $prefix the settings prefix
+   * @return CRM_OauthSync_SyncHelper the helper
+   */
+  public static function getInstance($prefix) {
+    if(self::$singletons == null) {
+      self::$singletons = array();
+    }
+
+    if(self::$singletons[$prefix] == null) {
+      self::$singletons[$prefix] = new CRM_OauthSync_SyncHelper($prefix);
+    }
+    return self::$singletons[$prefix];
+  }
 
   /**
    * CRM_OauthSync_SyncHelper constructor.
@@ -78,6 +96,23 @@ class CRM_OauthSync_SyncHelper {
    */
   public function getRemoteGroups($local_group) {
 
+  }
+
+  /**
+   * Triggers the civicrm_oauthsync_(prefix)_sync_groups_list hook
+   */
+  public function triggerUpdateGroupsListHook() {
+    $new_groups_list = array();
+    CRM_Utils_Hook::singleton()->invoke(
+      array('groups'),
+      $new_groups_list,
+      CRM_Utils_Hook::$_nullObject,
+      CRM_Utils_Hook::$_nullObject,
+      CRM_Utils_Hook::$_nullObject,
+      CRM_Utils_Hook::$_nullObject,
+      CRM_Utils_Hook::$_nullObject,
+      'civicrm_oauthsync_' . $this->prefix . '_sync_groups_list'
+    );
   }
 
 }

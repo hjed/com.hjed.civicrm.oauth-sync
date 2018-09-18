@@ -1,8 +1,8 @@
 <?php
+require_once 'CRM_OauthSync_SyncHelper.php';
 /**
  * Class to provide helper utilities for oauth
  */
-
 class CRM_OauthSync_OAuthHelper {
 
 
@@ -157,6 +157,9 @@ class CRM_OauthSync_OAuthHelper {
         );
 
         $this->setPrefixSetting('connected', true);
+        
+        // load the list of groups
+        CRM_OauthSync_SyncHelper::getInstance($this->settingsPrefix)->triggerUpdateGroupsListHook();
 
         $return_path = CRM_Utils_System::url($this->getPrefixSetting('callback_return_path'), 'reset=1', TRUE, NULL, FALSE, FALSE);
         header("Location: " . $return_path);

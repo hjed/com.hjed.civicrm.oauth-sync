@@ -94,6 +94,14 @@ The plugin provides a number of additional CiviCRM hooks that can be used to man
 Called on the successful completion of the consent flow. Plugins may want to handle this hook to provide functionality
 like selecting the correct site to sync with (if the api you are using supports multiple sites/accounts/installations/etc).
 
+#### civicrm_oauthsync_(prefix)_sync_groups_list
+
+Called when the plugin needs the group list to be updated. Plugins should call the relevant api endpoint to update the groups
+list and add those groups to the array passed in.
+
+Signature: ($groups: array())
+
+
 ### Option Groups
 
 Plugins must define the following option groups. 

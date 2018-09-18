@@ -220,6 +220,12 @@ function oauth_sync_civicrm_pre( $op, $objectName, $id, &$params ) {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_post
  */
 function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
+  // handle change to sync groups
+  if ($objectName == 'Group' ) {
+    if($op == 'edit' || $op == 'create') {
+      // TODO: check if profile field
+    }
+  }
   // TODO: handle adding or removing a user from a group in civicrm
 }
 
