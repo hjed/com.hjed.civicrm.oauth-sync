@@ -36,11 +36,42 @@ class CRM_OauthSync_SyncHelper {
   }
 
   /**
+   * Does a lookup to get the option group id for the groups list
+   * @return int the id
+   */
+  private function getGroupsOptionGroupId() {
+    $params = array('name' => $this->prefix . '_sync_groups_options');
+    $defaults = array();
+    $option_group = CRM_Core_BAO_OptionGroup::retrieve(
+      $params,
+      $defaults
+    );
+    return $option_group->id;
+  }
+
+  /**
    * Plugins should call this when one or more new group is added in the remote api
    * @param array $groups list of group names
    */
   public function addRemoteGroups($groups) {
-    //TODO: implement this
+    print "Add remote groups <br/>";
+    print_r($groups);
+
+    $group_id = $this->getGroupsOptionGroupId();
+    print "group id ". $group_id;
+
+    foreach ($groups as $group) {
+      // based on the code in OptionGroup.php
+      $value = new CRM_Core_DAO_OptionValue();
+      $value->option_group_id = $group_id;
+      $value->label = $group;
+      $value->value = $group;
+      $value->name = $group;
+      $value->is_default = false;
+      $value->is_active = false;
+      $value->save();
+    }
+
   }
 
   /**
@@ -59,14 +90,15 @@ class CRM_OauthSync_SyncHelper {
    */
   public function getCachedRemoteGroups() {
     //TODO: implement this
+    return array();
   }
 
   /**
    * Records that the given user has been removed from the remote group and removes said user from all synced groups
    * @param string $group the group name
-   * @param string $user_id the user name
+   * @param string $userId the user name
    */
-  public function remoteUserRemovedFromGroup($group, $user_id) {
+  public function remoteUserRemovedFromGroup($group, $userId) {
 
   }
 
@@ -74,38 +106,50 @@ class CRM_OauthSync_SyncHelper {
   /**
    * Records that the given user has been added tp the remote group and adds said user from all synced groups
    * @param string $group the group name
-   * @param string $user_id the user name
+   * @param string $userId the user name
    */
-  public function remoteUserAddedToGroup($group, $user_id) {
+  public function remoteUserAddedToGroup($group, $userId) {
 
   }
 
   /**
    * Helper function to translate local and remote groups
-   * @param string $remote_group the remote group
+   * @param string $remoteGroup the remote group
    * @return array the list of local group ids
    */
-  public function getLocalGroups($remote_group) {
+  public function getLocalGroups($remoteGroup) {
 
   }
 
   /**
    * Helper function to translate local and remote groups
-   * @param string $local_group the local group id
+   * @param string $localGroup the local group id
    * @return array the list of remote group ids
    */
-  public function getRemoteGroups($local_group) {
+  public function getRemoteGroups($localGroup) {
 
+  }
+
+  /**
+   * Updates the cached list of remote groups to match the provided list
+   * @param array $newGroupsList the new list of remote groups
+   */
+  public function updateRemoteGroupsList($newGroupsList) {
+    $current_list = $this->getCachedRemoteGroups();
+    $added = array_diff($newGroupsList, $current_list);
+    $removed = array_diff($current_list, $newGroupsList);
+    $this->addRemoteGroups($added);
+    $this->removeRemoteGroups($removed);
   }
 
   /**
    * Triggers the civicrm_oauthsync_(prefix)_sync_groups_list hook
    */
   public function triggerUpdateGroupsListHook() {
-    $new_groups_list = array();
+    $newGroupsList = array();
     CRM_Utils_Hook::singleton()->invoke(
       array('groups'),
-      $new_groups_list,
+      $newGroupsList,
       CRM_Utils_Hook::$_nullObject,
       CRM_Utils_Hook::$_nullObject,
       CRM_Utils_Hook::$_nullObject,
@@ -113,6 +157,9 @@ class CRM_OauthSync_SyncHelper {
       CRM_Utils_Hook::$_nullObject,
       'civicrm_oauthsync_' . $this->prefix . '_sync_groups_list'
     );
+
+    $this->updateRemoteGroupsList($newGroupsList);
+
   }
 
 }
