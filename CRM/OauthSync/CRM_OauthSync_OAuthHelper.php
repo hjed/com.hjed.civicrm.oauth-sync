@@ -12,8 +12,6 @@ class CRM_OauthSync_OAuthHelper {
    * @return CRM_OauthSync_OAuthHelper the helper
    */
   public static function getHelper($prefix) {
-    //print_r(self::getHelperArray());
-    //print_r($prefix);
     return self::getHelperArray()[$prefix];
   }
 
@@ -46,7 +44,6 @@ class CRM_OauthSync_OAuthHelper {
     $this->tokenUrl = $tokenUrl;
     $this->settingsPrefix = $prefix;
     self::$helperArray[$prefix] = $this;
-//    print_r(self::getHelperArray());
   }
 
   /**
@@ -115,7 +112,6 @@ class CRM_OauthSync_OAuthHelper {
       'code' => $code
     );
     $postBody = json_encode($requestJsonDict, JSON_UNESCAPED_SLASHES);
-    print $postBody;
 
     // make a request
     $ch = curl_init($this->tokenUrl);

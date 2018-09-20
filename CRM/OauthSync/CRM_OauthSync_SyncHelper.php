@@ -54,11 +54,8 @@ class CRM_OauthSync_SyncHelper {
    * @param array $groups list of group names
    */
   public function addRemoteGroups($groups) {
-    print "Add remote groups <br/>";
-    print_r($groups);
 
     $group_id = $this->getGroupsOptionGroupId();
-    print "group id ". $group_id;
 
     foreach ($groups as $group) {
       // based on the code in OptionGroup.php
@@ -69,6 +66,9 @@ class CRM_OauthSync_SyncHelper {
       $value->name = $group;
       $value->is_default = false;
       $value->is_active = false;
+      $value->weight = 1;
+      $value->is_reserved = true;
+      $value->is_active = true;
       $value->save();
     }
 
@@ -79,7 +79,17 @@ class CRM_OauthSync_SyncHelper {
    * @param array $groups list of group names
    */
   public function removeRemoteGroups($groups) {
-    //TODO: implement this
+
+    $groupId = $this->getGroupsOptionGroupId();
+    foreach($groups as $group) {
+      $searchParams = array(
+        'option_group_id' => $groupId,
+        'name' => $group
+      );
+      $defaults = array();
+      $optionValue = CRM_Core_BAO_OptionValue::retrieve($searchParams, $defaults);
+      CRM_Core_BAO_OptionValue::del($optionValue->id);
+    }
   }
 
   /**
