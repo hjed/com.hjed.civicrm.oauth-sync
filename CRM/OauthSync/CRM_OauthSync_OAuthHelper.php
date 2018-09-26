@@ -17,7 +17,7 @@ class CRM_OauthSync_OAuthHelper {
 
   static $helperArray = array();
 
-  private static function getHelperArray() {
+  public static function getHelperArray() {
     if(self::$helperArray == null) {
       self::$helperArray = array();
     }

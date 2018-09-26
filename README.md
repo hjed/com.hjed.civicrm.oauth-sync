@@ -99,8 +99,31 @@ like selecting the correct site to sync with (if the api you are using supports 
 Called when the plugin needs the group list to be updated. Plugins should call the relevant api endpoint to update the groups
 list and add those groups to the array passed in.
 
-Signature: ($groups: array())
+Signature:
 
+- &$groups : array - an array to fill with the list of remote groups
+ 
+
+#### civicrm_oauthsync_(prefix)_get_remote_user_list
+
+Called by the plugin when it needs to get the full list of users in a remote group. 
+This will normally occur when a remote group is added to a normal group.
+
+Signature: 
+
+- $remoteGroupName : string - the remote group we want to get the users for
+- &$members : array(int) - a list of user ids for the remote group
+
+### civicrm_oauthsync_(prefix)_update_remote_users
+
+Called by the plugin when users are removed or added to a local group. This should apply the update
+to the remote service.
+
+Signature:
+
+- $remoteGroupName : string - the remote group we are editing
+- $toRemove : array(int) - a list of user ids to be removed
+- $toAdd : array(int) = a list of user ids to be added
 
 ### Option Groups
 
