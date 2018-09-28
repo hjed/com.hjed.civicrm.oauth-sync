@@ -226,48 +226,62 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
       // TODO: there must be a way to work out of this has changed rather than doing it every time
       // TODO: check removals
       // check if any of our prefixed methods have changed
+      $customFields = CRM_Core_BAO_CustomValueTable::getEntityValues($objectId, $objectName, NULL, TRUE);
+//      print_r($customFields);
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
         $prefix = $helper->settingsPrefix;
-        $groupsList = $objectRef->{$prefix . "_sync_settings"};
-        if(count($groupsList) > 0) {
+        $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($prefix . "_sync_settings");
+        $remoteGroup = $customFields[$groupsId];
+        print_r($remoteGroup);
+        if($remoteGroup != null) {
           // we have groups
-          foreach ($groupsList as $remoteGroup) {
-            // retrieve this each time for consistency
-            $groupContacts = CRM_Contact_BAO_Group::getGroupContacts($objectId);
-            $groupMembers = array();
-            CRM_Utils_Hook::singleton()->invoke(
-              array('remoteGroupName', 'members'),
-              $remoteGroup,
-              $groupMembers,
-              CRM_Utils_Hook::$_nullObject,
-              CRM_Utils_Hook::$_nullObject,
-              CRM_Utils_Hook::$_nullObject,
-              CRM_Utils_Hook::$_nullObject,
-              'civicrm_oauthsync_' . $prefix . 'get_remote_user_list'
-            );
+          print_r($remoteGroup);
+          // retrieve this each time for consistency
+          $groupContacts = CRM_Contact_BAO_Group::getGroupContacts($objectId);
+          // the getGroupContacts method returns a list of contact objects containing just their ids
+          // their ids are also the keys of the array.
+          $groupContacts = array_keys($groupContacts);
 
-            // do a diff and get the groups in sync in a none destructive manner
-            $toAddLocal = array_diff($groupMembers, $groupContacts);
-            $toAddRemote = array_diff($groupContacts, $groupMembers);
+          print_r($groupContacts);
+          $groupMembers = array();
+          CRM_Utils_Hook::singleton()->invoke(
+            array('remoteGroupName', 'members'),
+            $remoteGroup,
+            $groupMembers,
+            CRM_Utils_Hook::$_nullObject,
+            CRM_Utils_Hook::$_nullObject,
+            CRM_Utils_Hook::$_nullObject,
+            CRM_Utils_Hook::$_nullObject,
+            'civicrm_oauthsync_' . $prefix . '_get_remote_user_list'
+          );
 
-            CRM_Contact_BAO_GroupContact::addContactsToGroup($toAddLocal, $objectId);
+          print_r($groupMembers);
+          print_r($groupContacts);
+          // do a diff and get the groups in sync in a none destructive manner
+          $toAddLocal = array_diff($groupMembers, $groupContacts);
+          $toAddRemote = array_diff($groupContacts, $groupMembers);
+          print_r($toAddRemote);
+          print_r($toAddLocal);
 
-            # we don't need to remove any users here
-            $emptyArray = array();
-            // add the remote members
-            CRM_Utils_Hook::singleton()->invoke(
-                array('remoteGroupName', 'toRemove', 'toAdd'),
-              $remoteGroup,
-              $emptyArray,
-              $toAddRemote,
-              CRM_Utils_Hook::$_nullObject,
-              CRM_Utils_Hook::$_nullObject,
-              CRM_Utils_Hook::$_nullObject,
-              'civicrm_oauthsync_' . $prefix . 'update_remote_users'
-            );
-          }
+          CRM_Contact_BAO_GroupContact::addContactsToGroup($toAddLocal, $objectId);
+
+          # we don't need to remove any users here
+          $emptyArray = array();
+          // add the remote members
+          CRM_Utils_Hook::singleton()->invoke(
+              array('remoteGroupName', 'toRemove', 'toAdd'),
+            $remoteGroup,
+            $emptyArray,
+            $toAddRemote,
+            CRM_Utils_Hook::$_nullObject,
+            CRM_Utils_Hook::$_nullObject,
+            CRM_Utils_Hook::$_nullObject,
+            'civicrm_oauthsync_' . $prefix . '_update_remote_users'
+          );
 
         }
+//        print_r($objectRef);
+        //die();
       }
       // TODO: check if profile field
     }
