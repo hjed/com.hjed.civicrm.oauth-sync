@@ -100,68 +100,34 @@ class CRM_OauthSync_OAuthHelper {
    * @param string $code the code to use for the exchange
    */
   public function doOAuthCodeExchange($code) {
-    $client_id = $this->getPrefixSetting('client_id');
-    $client_secret = $this->getPrefixSetting('secret');
     $redirect_url = self::generateRedirectUrl();
 
     $requestJsonDict = array(
-      'client_id' => $client_id,
-      'client_secret' => $client_secret,
       'redirect_uri' => $redirect_url,
-      'grant_type' => 'authorization_code',
       'code' => $code
     );
-    $postBody = json_encode($requestJsonDict, JSON_UNESCAPED_SLASHES);
+    $success = $this->doOAuthTokenRequest('authorization_code', $requestJsonDict);
 
-    // make a request
-    $ch = curl_init($this->tokenUrl);
-//    $ch = curl_init('http://localhost:1500');
-    curl_setopt_array($ch, array(
-      CURLOPT_POST => TRUE,
-      CURLOPT_RETURNTRANSFER => TRUE,
-      CURLOPT_HTTPHEADER => array(
-        'Content-Type: application/json'
-      ),
-      // the token endpoint requires a user agent
-      CURLOPT_USERAGENT => 'OauthSync Helper',
-      CURLOPT_POSTFIELDS => $postBody
-    ));
-    $response = curl_exec($ch);
-    if(curl_errno($ch)) {
-      echo 'Request Error:' . curl_error($ch);
-      // TODO: handle this better
-    } else {
+    if($success) {
+      CRM_Utils_Hook::singleton()->invoke(
+        array('prefix'),
+        $this->settingsPrefix,
+        CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject,
+        'civicrm_oauthsync_consent_success'
+      );
 
-      $response_json = json_decode($response, true);
-      if(in_array("error", $response_json)) {
-        // TODO: handle this better
-        echo "<br/><br/>Error\n\n";
-        echo $response_json["error_description"];
-      } else {
-        $this->parseOAuthTokenResponse($response_json);
+      $this->setPrefixSetting('connected', true);
 
+      // load the list of groups
+      CRM_OauthSync_SyncHelper::getInstance($this->settingsPrefix)->triggerUpdateGroupsListHook();
 
-        CRM_Utils_Hook::singleton()->invoke(
-          array('prefix'),
-          $this->settingsPrefix,
-          CRM_Utils_Hook::$_nullObject,
-          CRM_Utils_Hook::$_nullObject,
-          CRM_Utils_Hook::$_nullObject,
-          CRM_Utils_Hook::$_nullObject,
-          CRM_Utils_Hook::$_nullObject,
-          'civicrm_oauthsync_consent_success'
-        );
-
-        $this->setPrefixSetting('connected', true);
-        
-        // load the list of groups
-        CRM_OauthSync_SyncHelper::getInstance($this->settingsPrefix)->triggerUpdateGroupsListHook();
-
-        $return_path = CRM_Utils_System::url($this->getPrefixSetting('callback_return_path'), 'reset=1', TRUE, NULL, FALSE, FALSE);
-        header("Location: " . $return_path);
-        die();
-      }
-
+      $return_path = CRM_Utils_System::url($this->getPrefixSetting('callback_return_path'), 'reset=1', TRUE, NULL, FALSE, FALSE);
+      header("Location: " . $return_path);
+      die();
     }
 
   }
@@ -175,7 +141,8 @@ class CRM_OauthSync_OAuthHelper {
     // for now just store the tokens
     $this->setPrefixSetting("token", $response_json["access_token"]);
     $this->setPrefixSetting("refresh", $response_json["refresh_token"]);
-    $this->setPrefixSetting("expiry", $response_json["expiry"]);
+    // we subtract 10 to give us an additional saftey margin
+    $this->setPrefixSetting("expiry", time + $response_json["expiry"] - 10);
   }
 
   /**
@@ -198,6 +165,71 @@ class CRM_OauthSync_OAuthHelper {
     return $redirect_url;
   }
 
+
+  /**
+   * Perform an oauth token exchange and update our token storage
+   *
+   * @param string $grant_type the oauth grant type to perform
+   * @param array $authParams the additional parameters needed for that specific grant type
+   *  Ex. array('redirect_url' => $redirect_url, 'code' => $code)
+   * @return bool success
+   */
+  public function doOAuthTokenRequest($grant_type, $authParams) {
+
+    $client_id = $this->getPrefixSetting('client_id');
+    $client_secret = $this->getPrefixSetting('secret');
+
+    $requestJsonDict = array(
+      'client_id' => $client_id,
+      'client_secret' => $client_secret,
+      'grant_type' => $grant_type
+    ) + $authParams;
+    $postBody = json_encode($requestJsonDict, JSON_UNESCAPED_SLASHES);
+
+    // make a request
+    $ch = curl_init($this->tokenUrl);
+    curl_setopt_array($ch, array(
+      CURLOPT_POST => TRUE,
+      CURLOPT_RETURNTRANSFER => TRUE,
+      CURLOPT_HTTPHEADER => array(
+        'Content-Type: application/json'
+      ),
+      // the token endpoint requires a user agent
+      CURLOPT_USERAGENT => 'OauthSync Helper',
+      CURLOPT_POSTFIELDS => $postBody
+    ));
+    $response = curl_exec($ch);
+    if(curl_errno($ch)) {
+      echo 'Request Error:' . curl_error($ch);
+      return false;
+      // TODO: handle this better
+    } else {
+
+      $response_json = json_decode($response, true);
+      if (in_array("error", $response_json)) {
+        // TODO: handle this better
+        echo "<br/><br/>Error\n\n";
+        echo $response_json["error_description"];
+        return false;
+      } else {
+        $this->parseOAuthTokenResponse($response_json);
+        return true;
+      }
+    }
+  }
+
+  /**
+   * Refresh the access token
+   */
+  public function refreshAccessToken() {
+    $jsonBody = array(
+      'refresh_token' => $this->getPrefixSetting('refresh')
+    );
+    $this->doOAuthTokenRequest('refresh_token', $jsonBody);
+
+    //TODO: handle failure
+  }
+
   /**
    * Adds the access token to a curl request
    *
@@ -206,6 +238,9 @@ class CRM_OauthSync_OAuthHelper {
    */
   public function addAccessToken(&$curl_request) {
     // TODO: check expiry and refresh
+    if($this->getPrefixSetting("expiry") <= time()) {
+      $this->refreshAccessToken();
+    }
     curl_setopt(
       $curl_request,
       CURLOPT_HTTPHEADER,
