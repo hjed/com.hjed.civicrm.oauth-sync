@@ -223,9 +223,9 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
   // handle change to sync groups
   if ($objectName == 'Group' ) {
     if($op == 'edit' || $op == 'create') {
-      // TODO: there must be a way to work out of this has changed rather than doing it every time
-      // TODO: check removals
       // check if any of our prefixed methods have changed
+      // we don't need to check for removals as that just means we don't sync them next time a sync action
+      // is performed.
       $customFields = CRM_Core_BAO_CustomValueTable::getEntityValues($objectId, $objectName, NULL, TRUE);
 //      print_r($customFields);
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
