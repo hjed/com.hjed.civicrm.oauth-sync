@@ -1,5 +1,6 @@
 <?php
 require_once 'CRM_OauthSync_SyncHelper.php';
+
 /**
  * Class to provide helper utilities for oauth
  */
@@ -142,7 +143,8 @@ class CRM_OauthSync_OAuthHelper {
     $this->setPrefixSetting("token", $response_json["access_token"]);
     $this->setPrefixSetting("refresh", $response_json["refresh_token"]);
     // we subtract 10 to give us an additional saftey margin
-    $this->setPrefixSetting("expiry", time + $response_json["expiry"] - 10);
+    $this->setPrefixSetting("expiry", time() + $response_json["expires_in"] - 10);
+
   }
 
   /**
@@ -185,7 +187,6 @@ class CRM_OauthSync_OAuthHelper {
       'grant_type' => $grant_type
     ) + $authParams;
     $postBody = json_encode($requestJsonDict, JSON_UNESCAPED_SLASHES);
-
     // make a request
     $ch = curl_init($this->tokenUrl);
     curl_setopt_array($ch, array(
@@ -238,6 +239,7 @@ class CRM_OauthSync_OAuthHelper {
    */
   public function addAccessToken(&$curl_request) {
     // TODO: check expiry and refresh
+    print "<br/> exp: " . $this->getPrefixSetting('expiry') . ' time ' . time();
     if($this->getPrefixSetting("expiry") <= time()) {
       $this->refreshAccessToken();
     }
