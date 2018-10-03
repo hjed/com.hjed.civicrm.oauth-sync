@@ -193,7 +193,7 @@ class CRM_OauthSync_OAuthHelper {
       CURLOPT_POST => TRUE,
       CURLOPT_RETURNTRANSFER => TRUE,
       CURLOPT_HTTPHEADER => array(
-        'Content-Type: application/json'
+        'Content-Type: application/json',
       ),
       // the token endpoint requires a user agent
       CURLOPT_USERAGENT => 'OauthSync Helper',
@@ -249,6 +249,7 @@ class CRM_OauthSync_OAuthHelper {
       array(
         'Authorization: Bearer ' . $this->getPrefixSetting('token'),
         'Accept: application/json',
+        'Content-Type: application/json'
       )
     );
 
