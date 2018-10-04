@@ -222,7 +222,7 @@ function oauth_sync_civicrm_pre( $op, $objectName, $id, &$params ) {
 function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
   // handle change to sync groups
   if ($objectName == 'Group' ) {
-    if($op == 'edit' || $op == 'create') {
+    if ($op == 'edit' || $op == 'create') {
       // check if any of our prefixed methods have changed
       // we don't need to check for removals as that just means we don't sync them next time a sync action
       // is performed.
@@ -233,7 +233,7 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
         $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($prefix . "_sync_settings");
         $remoteGroup = $customFields[$groupsId];
         print_r($remoteGroup);
-        if($remoteGroup != null) {
+        if ($remoteGroup != null) {
           // we have groups
           print_r($remoteGroup);
           // retrieve this each time for consistency
@@ -269,7 +269,7 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
           $emptyArray = array();
           // add the remote members
           CRM_Utils_Hook::singleton()->invoke(
-              array('remoteGroupName', 'toRemove', 'toAdd'),
+            array('remoteGroupName', 'toRemove', 'toAdd'),
             $remoteGroup,
             $emptyArray,
             $toAddRemote,
@@ -280,10 +280,67 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
           );
 
         }
-//        print_r($objectRef);
-        //die();
       }
-      // TODO: check if profile field
+    }
+  } elseif($objectName == 'GroupContact') {
+    $groupCustomFields = CRM_Core_BAO_CustomValueTable::getEntityValues(
+      CRM_Contact_BAO_GroupContact::getGroupId($objectId),
+      "Group",
+      NULL,
+      TRUE
+    );
+
+    if($op == 'create' || $op == 'edit') {
+      foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
+        $prefix = $helper->settingsPrefix;
+
+        // we only care about groups that have a remote counter part
+        $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($prefix . "_sync_settings");
+        $remoteGroup = $groupCustomFields[$groupsId];
+        print_r($remoteGroup);
+        if($remoteGroup != null) {
+          # we don't need to remove any users here
+          $emptyArray = array();
+          $toAddRemote = $objectRef;
+          // add the remote members
+          CRM_Utils_Hook::singleton()->invoke(
+            array('remoteGroupName', 'toRemove', 'toAdd'),
+            $remoteGroup,
+            $emptyArray,
+            $toAddRemote,
+            CRM_Utils_Hook::$_nullObject,
+            CRM_Utils_Hook::$_nullObject,
+            CRM_Utils_Hook::$_nullObject,
+            'civicrm_oauthsync_' . $prefix . '_update_remote_users'
+          );
+        }
+      }
+    } elseif ($op == 'delete') {
+      foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
+        $prefix = $helper->settingsPrefix;
+
+        // we only care about groups that have a remote counter part
+        $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($prefix . "_sync_settings");
+        $remoteGroup = $groupCustomFields[$groupsId];
+        print_r($remoteGroup);
+        if($remoteGroup != null) {
+          # we don't need to remove any users here
+          $emptyArray = array();
+          $toRemoveRemote = $objectRef;
+          // add the remote members
+          CRM_Utils_Hook::singleton()->invoke(
+            array('remoteGroupName', 'toRemove', 'toAdd'),
+            $remoteGroup,
+            $toRemoveRemote,
+            $emptyArray,
+            CRM_Utils_Hook::$_nullObject,
+            CRM_Utils_Hook::$_nullObject,
+            CRM_Utils_Hook::$_nullObject,
+            'civicrm_oauthsync_' . $prefix . '_update_remote_users'
+          );
+        }
+      }
+
     }
   }
   // TODO: handle adding or removing a user from a group in civicrm

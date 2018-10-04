@@ -125,6 +125,7 @@ Signature:
 - $toRemove : array(int) - a list of user ids to be removed
 - $toAdd : array(int) = a list of user ids to be added
 
+
 ### Option Groups
 
 Plugins must define the following option groups. 
