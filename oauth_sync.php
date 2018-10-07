@@ -236,48 +236,7 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
         if ($remoteGroup != null) {
           // we have groups
           print_r($remoteGroup);
-          // retrieve this each time for consistency
-          $groupContacts = CRM_Contact_BAO_Group::getGroupContacts($objectId);
-          // the getGroupContacts method returns a list of contact objects containing just their ids
-          // their ids are also the keys of the array.
-          $groupContacts = array_keys($groupContacts);
-
-          print_r($groupContacts);
-          $groupMembers = array();
-          CRM_Utils_Hook::singleton()->invoke(
-            array('remoteGroupName', 'members'),
-            $remoteGroup,
-            $groupMembers,
-            CRM_Utils_Hook::$_nullObject,
-            CRM_Utils_Hook::$_nullObject,
-            CRM_Utils_Hook::$_nullObject,
-            CRM_Utils_Hook::$_nullObject,
-            'civicrm_oauthsync_' . $prefix . '_get_remote_user_list'
-          );
-
-          print_r($groupMembers);
-          print_r($groupContacts);
-          // do a diff and get the groups in sync in a none destructive manner
-          $toAddLocal = array_diff($groupMembers, $groupContacts);
-          $toAddRemote = array_diff($groupContacts, $groupMembers);
-          print_r($toAddRemote);
-          print_r($toAddLocal);
-
-          CRM_Contact_BAO_GroupContact::addContactsToGroup($toAddLocal, $objectId);
-
-          # we don't need to remove any users here
-          $emptyArray = array();
-          // add the remote members
-          CRM_Utils_Hook::singleton()->invoke(
-            array('remoteGroupName', 'toRemove', 'toAdd'),
-            $remoteGroup,
-            $emptyArray,
-            $toAddRemote,
-            CRM_Utils_Hook::$_nullObject,
-            CRM_Utils_Hook::$_nullObject,
-            CRM_Utils_Hook::$_nullObject,
-            'civicrm_oauthsync_' . $prefix . '_update_remote_users'
-          );
+          CRM_OauthSync_SyncHelper::getInstance($prefix)->syncGroup($objectId, $remoteGroup, false);
 
         }
       }

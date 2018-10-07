@@ -141,6 +141,66 @@ class CRM_OauthSync_SyncHelper {
   }
 
   /**
+   * Does a sync of a local group and a remote group
+   *
+   * This method *does not* create a connection between two groups.
+   * @param int $localGroupId the local group id
+   * @param string $remoteGroup the remote group id
+   * @param bool $remoteIsMaster if we should remove contacts that don't exist in the
+   *  the remote group. If false this function performs a union of the two groups, if
+   *  true this function causes the local group to exactly match the remote group.
+   */
+  public function syncGroup($localGroupId, $remoteGroup, $remoteIsMaster = false) {
+    // retrieve this each time for consistency
+    $groupContacts = CRM_Contact_BAO_Group::getGroupContacts($localGroupId);
+    // the getGroupContacts method returns a list of contact objects containing just their ids
+    // their ids are also the keys of the array.
+    $groupContacts = array_keys($groupContacts);
+
+    print_r($groupContacts);
+    $groupMembers = array();
+    CRM_Utils_Hook::singleton()->invoke(
+      array('remoteGroupName', 'members'),
+      $remoteGroup,
+      $groupMembers,
+      CRM_Utils_Hook::$_nullObject,
+      CRM_Utils_Hook::$_nullObject,
+      CRM_Utils_Hook::$_nullObject,
+      CRM_Utils_Hook::$_nullObject,
+      'civicrm_oauthsync_' . $this->prefix . '_get_remote_user_list'
+    );
+
+    print_r($groupMembers);
+    print_r($groupContacts);
+    // do a diff and get the groups in sync in a none destructive manner
+    $toAddLocal = array_diff($groupMembers, $groupContacts);
+    $usersNotOnRemote = array_diff($groupContacts, $groupMembers);
+    print_r($usersNotOnRemote);
+    print_r($toAddLocal);
+
+    CRM_Contact_BAO_GroupContact::addContactsToGroup($toAddLocal, $localGroupId);
+
+    if($remoteIsMaster) {
+      // remove the contacts not in the remote group
+      CRM_Contact_BAO_GroupContact::removeContactsFromGroup($usersNotOnRemote, $localGroupId);
+    } else {
+      # we don't need to remove any users here
+      $emptyArray = array();
+      // add the remote members
+      CRM_Utils_Hook::singleton()->invoke(
+        array('remoteGroupName', 'toRemove', 'toAdd'),
+        $remoteGroup,
+        $emptyArray,
+        $usersNotOnRemote,
+        CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject,
+        CRM_Utils_Hook::$_nullObject,
+        'civicrm_oauthsync_' . $this->prefix . '_update_remote_users'
+      );
+    }
+  }
+
+  /**
    * Updates the cached list of remote groups to match the provided list
    * @param array $newGroupsList the new list of remote groups
    */
