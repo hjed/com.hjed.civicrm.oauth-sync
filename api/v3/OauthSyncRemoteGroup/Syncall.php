@@ -47,7 +47,7 @@ function civicrm_api3_oauth_sync_remote_group_Syncall($params) {
       print_r($customFields);
       if($customFields[$remoteGroupFieldId] != null) {
         $remoteGroup = $customFields[$remoteGroupFieldId];
-        $returnValues[$helper->settingsPrefix][$groupId]["results"] = $syncHelper->syncGroup($groupId, $remoteGroup);
+        $returnValues[$helper->settingsPrefix][$groupId]["results"] = $syncHelper->syncGroup($groupId, $remoteGroup, true);
       }
     }
   }

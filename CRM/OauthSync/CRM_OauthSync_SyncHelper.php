@@ -188,6 +188,7 @@ class CRM_OauthSync_SyncHelper {
       // remove the contacts not in the remote group
       CRM_Contact_BAO_GroupContact::removeContactsFromGroup($usersNotOnRemote, $localGroupId);
     } else {
+      print "remote is not master";
       # we don't need to remove any users here
       $emptyArray = array();
       // add the remote members
