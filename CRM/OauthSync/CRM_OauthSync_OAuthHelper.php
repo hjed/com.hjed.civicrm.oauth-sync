@@ -223,6 +223,7 @@ class CRM_OauthSync_OAuthHelper {
    * Refresh the access token
    */
   public function refreshAccessToken() {
+    print("refreshing");
     $jsonBody = array(
       'refresh_token' => $this->getPrefixSetting('refresh')
     );

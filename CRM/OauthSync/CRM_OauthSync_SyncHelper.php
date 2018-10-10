@@ -149,6 +149,7 @@ class CRM_OauthSync_SyncHelper {
    * @param bool $remoteIsMaster if we should remove contacts that don't exist in the
    *  the remote group. If false this function performs a union of the two groups, if
    *  true this function causes the local group to exactly match the remote group.
+   * @return array the users added to local and the users that weren't on the remote
    */
   public function syncGroup($localGroupId, $remoteGroup, $remoteIsMaster = false) {
     // retrieve this each time for consistency
@@ -157,6 +158,7 @@ class CRM_OauthSync_SyncHelper {
     // their ids are also the keys of the array.
     $groupContacts = array_keys($groupContacts);
 
+    print("group contacts");
     print_r($groupContacts);
     $groupMembers = array();
     CRM_Utils_Hook::singleton()->invoke(
@@ -170,7 +172,9 @@ class CRM_OauthSync_SyncHelper {
       'civicrm_oauthsync_' . $this->prefix . '_get_remote_user_list'
     );
 
+    print("\ngroupMembers\n");
     print_r($groupMembers);
+    print("\ncontacts\n");
     print_r($groupContacts);
     // do a diff and get the groups in sync in a none destructive manner
     $toAddLocal = array_diff($groupMembers, $groupContacts);
@@ -198,6 +202,7 @@ class CRM_OauthSync_SyncHelper {
         'civicrm_oauthsync_' . $this->prefix . '_update_remote_users'
       );
     }
+    return array('added_to_local' => $toAddLocal, 'users_not_on_remote' => $usersNotOnRemote);
   }
 
   /**

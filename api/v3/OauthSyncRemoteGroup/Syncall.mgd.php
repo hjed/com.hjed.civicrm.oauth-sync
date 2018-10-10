@@ -15,7 +15,7 @@ return array (
       'description' => 'Call OauthSyncRemoteGroup.SyncAll API',
       'run_frequency' => 'Daily',
       'api_entity' => 'OauthSyncRemoteGroup',
-      'api_action' => 'SyncAll',
+      'api_action' => 'Syncall',
       'parameters' => '',
     ),
   ),
