@@ -141,7 +141,9 @@ class CRM_OauthSync_OAuthHelper {
   public function parseOAuthTokenResponse($response_json) {
     // for now just store the tokens
     $this->setPrefixSetting("token", $response_json["access_token"]);
-    $this->setPrefixSetting("refresh", $response_json["refresh_token"]);
+    if($response_json["refresh_token"]) {
+      $this->setPrefixSetting("refresh", $response_json["refresh_token"]);
+    }
     // we subtract 10 to give us an additional saftey margin
     $this->setPrefixSetting("expiry", time() + $response_json["expires_in"] - 10);
 

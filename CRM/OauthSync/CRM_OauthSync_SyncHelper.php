@@ -10,6 +10,12 @@ class CRM_OauthSync_SyncHelper {
   private static $singletons;
 
   /**
+   * @var bool used to indicate that the system is performing a delete operation on a
+   * group contact and this operation should not be replicated to the remote api.
+   */
+  public $protectedDeleteInProgress = false;
+
+  /**
    * Gets an instance of a Sync Helper for the given prefix
    * @param $prefix the settings prefix
    * @return CRM_OauthSync_SyncHelper the helper
@@ -185,8 +191,13 @@ class CRM_OauthSync_SyncHelper {
     CRM_Contact_BAO_GroupContact::addContactsToGroup($toAddLocal, $localGroupId);
 
     if($remoteIsMaster) {
-      // remove the contacts not in the remote group
-      CRM_Contact_BAO_GroupContact::removeContactsFromGroup($usersNotOnRemote, $localGroupId);
+      $this->protectedDeleteInProgress = true;
+      try {
+        // remove the contacts not in the remote group
+        CRM_Contact_BAO_GroupContact::removeContactsFromGroup($usersNotOnRemote, $localGroupId);
+      } finally {
+        $this->protectedDeleteInProgress = false;
+      }
     } else {
       print "remote is not master";
       # we don't need to remove any users here

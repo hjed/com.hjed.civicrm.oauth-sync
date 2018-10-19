@@ -227,7 +227,6 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
       // we don't need to check for removals as that just means we don't sync them next time a sync action
       // is performed.
       $customFields = CRM_Core_BAO_CustomValueTable::getEntityValues($objectId, $objectName, NULL, TRUE);
-//      print_r($customFields);
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
         $prefix = $helper->settingsPrefix;
         $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($prefix . "_sync_settings");
@@ -277,6 +276,11 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
     } elseif ($op == 'delete') {
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
         $prefix = $helper->settingsPrefix;
+
+        // if this hook was triggered by a server side delete don't send it back to the server
+        if(CRM_OauthSync_SyncHelper::getInstance($prefix)->protectedDeleteInProgress) {
+          continue;
+        }
 
         // we only care about groups that have a remote counter part
         $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($prefix . "_sync_settings");
