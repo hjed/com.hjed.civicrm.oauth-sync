@@ -245,8 +245,9 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
       CRM_Contact_BAO_GroupContact::getGroupId($objectId),
       "Group",
       NULL,
-      TRUE
+      FALSE
     );
+    print_r($groupCustomFields);
 
     if($op == 'create' || $op == 'edit') {
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
@@ -276,14 +277,19 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
     } elseif ($op == 'delete') {
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
         $prefix = $helper->settingsPrefix;
+        print($prefix);
+        print("\n");
 
         // if this hook was triggered by a server side delete don't send it back to the server
         if(CRM_OauthSync_SyncHelper::getInstance($prefix)->protectedDeleteInProgress) {
+          print("protected");
           continue;
         }
 
         // we only care about groups that have a remote counter part
         $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($prefix . "_sync_settings");
+        print($groupsId);
+        print("getting remote group");
         $remoteGroup = $groupCustomFields[$groupsId];
         print_r($remoteGroup);
         if($remoteGroup != null) {
@@ -303,7 +309,7 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
           );
         }
       }
-
+      die();
     }
   }
   // TODO: handle adding or removing a user from a group in civicrm

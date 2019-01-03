@@ -222,6 +222,7 @@ class CRM_OauthSync_SyncHelper {
    * @param array $newGroupsList the new list of remote groups
    */
   public function updateRemoteGroupsList($newGroupsList) {
+    print_r($newGroupsList);
     $current_list = $this->getCachedRemoteGroups();
     $added = array_diff($newGroupsList, $current_list);
     $removed = array_diff($current_list, $newGroupsList);
@@ -245,8 +246,9 @@ class CRM_OauthSync_SyncHelper {
       'civicrm_oauthsync_' . $this->prefix . '_sync_groups_list'
     );
 
+    print 'civicrm_oauthsync_' . $this->prefix . '_sync_groups_list';
     $this->updateRemoteGroupsList($newGroupsList);
-
+    die();
   }
 
 }

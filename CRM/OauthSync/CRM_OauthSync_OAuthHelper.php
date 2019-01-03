@@ -108,7 +108,6 @@ class CRM_OauthSync_OAuthHelper {
       'code' => $code
     );
     $success = $this->doOAuthTokenRequest('authorization_code', $requestJsonDict);
-
     if($success) {
       CRM_Utils_Hook::singleton()->invoke(
         array('prefix'),
@@ -165,7 +164,7 @@ class CRM_OauthSync_OAuthHelper {
    * @return string
    */
   public static function generateRedirectUrl() {
-    $redirect_url = CRM_Utils_System::url('civicrm/oauth-sync/callback', 'reset=1', TRUE, NULL, FALSE, TRUE);
+    $redirect_url = CRM_Utils_System::url('civicrm/oauth-sync/callback', 'reset=1', TRUE, NULL, FALSE, FALSE);
     return $redirect_url;
   }
 
@@ -208,6 +207,7 @@ class CRM_OauthSync_OAuthHelper {
       // TODO: handle this better
     } else {
 
+      print_r($response);
       $response_json = json_decode($response, true);
       if (in_array("error", $response_json)) {
         // TODO: handle this better
@@ -255,6 +255,7 @@ class CRM_OauthSync_OAuthHelper {
         'Content-Type: application/json'
       )
     );
+    print 'Authorization: Bearer ' . $this->getPrefixSetting('token');
 
   }
 
