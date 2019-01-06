@@ -229,8 +229,7 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
       $customFields = CRM_Core_BAO_CustomValueTable::getEntityValues($objectId, $objectName, NULL, TRUE);
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
         $prefix = $helper->settingsPrefix;
-        $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($prefix . "_sync_settings");
-        $remoteGroup = $customFields[$groupsId];
+        $remoteGroup = CRM_OauthSync_SyncHelper::getInstance($prefix)->getRemoteGroup($objectId, $customFields);
         print_r($remoteGroup);
         if ($remoteGroup != null) {
           // we have groups
@@ -241,23 +240,18 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
       }
     }
   } elseif($objectName == 'GroupContact') {
-    $groupCustomFields = CRM_Core_BAO_CustomValueTable::getEntityValues(
-      CRM_Contact_BAO_GroupContact::getGroupId($objectId),
-      "Group",
-      NULL,
-      FALSE
-    );
-    print_r($groupCustomFields);
-
+    
+//    $localGroupId = CRM_Contact_BAO_GroupContact::getGroupId($objectId);
+    // this seems to be a bug in civicrm but its giving us the groupId rather than the group contact id
+    $localGroupId = $objectId;
     if($op == 'create' || $op == 'edit') {
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
         $prefix = $helper->settingsPrefix;
+        $syncHelper = CRM_OauthSync_SyncHelper::getInstance($prefix);
 
-        // we only care about groups that have a remote counter part
-        $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($prefix . "_sync_settings");
-        $remoteGroup = $groupCustomFields[$groupsId];
-        print_r($remoteGroup);
-        if($remoteGroup != null) {
+        $remoteGroups = $syncHelper->getRemoteGroupsIncludingParents($localGroupId);
+
+        foreach($remoteGroups as $remoteGroup) {
           # we don't need to remove any users here
           $emptyArray = array();
           $toAddRemote = $objectRef;
@@ -277,22 +271,19 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
     } elseif ($op == 'delete') {
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
         $prefix = $helper->settingsPrefix;
+        $syncHelper = CRM_OauthSync_SyncHelper::getInstance($prefix);
         print($prefix);
         print("\n");
 
         // if this hook was triggered by a server side delete don't send it back to the server
-        if(CRM_OauthSync_SyncHelper::getInstance($prefix)->protectedDeleteInProgress) {
+        if($syncHelper->protectedDeleteInProgress) {
           print("protected");
           continue;
         }
 
-        // we only care about groups that have a remote counter part
-        $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($prefix . "_sync_settings");
-        print($groupsId);
-        print("getting remote group");
-        $remoteGroup = $groupCustomFields[$groupsId];
-        print_r($remoteGroup);
-        if($remoteGroup != null) {
+        $remoteGroups = $syncHelper->getRemoteGroupsIncludingParents($localGroupId);
+
+        foreach($remoteGroups as $remoteGroup) {
           # we don't need to remove any users here
           $emptyArray = array();
           $toRemoveRemote = $objectRef;
@@ -312,6 +303,5 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
       die();
     }
   }
-  // TODO: handle adding or removing a user from a group in civicrm
+  
 }
-

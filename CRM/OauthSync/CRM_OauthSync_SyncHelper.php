@@ -139,11 +139,17 @@ class CRM_OauthSync_SyncHelper {
 
   /**
    * Helper function to translate local and remote groups
-   * @param string $localGroup the local group id
-   * @return array the list of remote group ids
+   * @param int $localGroup the local group id
+   * @param array $customFields optionally the custom fields for the group (to improve efficiency)
+   * @return string the remote group
    */
-  public function getRemoteGroups($localGroup) {
+  public function getRemoteGroup($localGroup, $customFields = null) {
+    if($customFields == null) {
+      $customFields = CRM_Core_BAO_CustomValueTable::getEntityValues($localGroup, 'Group', NULL, TRUE);
+    }
 
+    $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($this->prefix . "_sync_settings");
+    return $customFields[$groupsId];
   }
 
   /**
@@ -155,7 +161,7 @@ class CRM_OauthSync_SyncHelper {
    * @param bool $remoteIsMaster if we should remove contacts that don't exist in the
    *  the remote group. If false this function performs a union of the two groups, if
    *  true this function causes the local group to exactly match the remote group.
-   * @return array the users added to local and the users that weren't on the remote
+   * @return array the users added to local and the users that weren't on the remote as well as their parents
    */
   public function syncGroup($localGroupId, $remoteGroup, $remoteIsMaster = false) {
     // retrieve this each time for consistency
@@ -214,7 +220,20 @@ class CRM_OauthSync_SyncHelper {
         'civicrm_oauthsync_' . $this->prefix . '_update_remote_users'
       );
     }
-    return array('added_to_local' => $toAddLocal, 'users_not_on_remote' => $usersNotOnRemote);
+    $output =  array(
+      'added_to_local' => $toAddLocal,
+      'users_not_on_remote' => $usersNotOnRemote
+    );
+
+    if(CRM_Contact_BAO_GroupNesting::hasParentGroups($localGroupId)) {
+      $output['parent'] = array();
+      $parents = CRM_Contact_BAO_GroupNesting::getParentGroupIds($localGroupId);
+      foreach ($parents as $parent) {
+        $this->syncGroup($parent, $this->getRemoteGroup($parent) , $remoteIsMaster);
+      }
+    }
+
+    return $output;
   }
 
   /**
@@ -249,6 +268,40 @@ class CRM_OauthSync_SyncHelper {
     print 'civicrm_oauthsync_' . $this->prefix . '_sync_groups_list';
     $this->updateRemoteGroupsList($newGroupsList);
     die();
+  }
+
+  /**
+   * Finds all remote groups
+   * @param $localGroupId the local group to check
+   * @return array the remote groups reltated to this group (including those related through its parents)
+   * @throws CiviCRM_API3_Exception
+   */
+  public function getRemoteGroupsIncludingParents($localGroupId) {
+    $allLocal = array($localGroupId);
+    $next = array($localGroupId);
+    while($next = CRM_Contact_BAO_GroupNesting::getParentGroupIds($next)) {
+      $allLocal = array_merge($next, $allLocal);
+    }
+    
+    $remoteGroups = array();
+    foreach ($allLocal as $groupId) {
+
+      $groupCustomFields = CRM_Core_BAO_CustomValueTable::getEntityValues(
+        $groupId,
+        "Group",
+        NULL,
+        FALSE
+      );
+      
+      // we only care about groups that have a remote counter part
+      $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($this->prefix . "_sync_settings");
+
+      $remoteGroup = $groupCustomFields[$groupsId];
+      if($remoteGroup != null) {
+        $remoteGroups[] = $remoteGroup;
+      }
+    }
+    return $remoteGroups;
   }
 
 }
