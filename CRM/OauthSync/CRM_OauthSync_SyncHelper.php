@@ -4,6 +4,10 @@
  * Helper class for handling operations on users and groups
  */
 class CRM_OauthSync_SyncHelper {
+  
+  public static $SYNC_MODE_TWO_WAY = "two-way";
+  public static $SYNC_MODE_CIVICRM_MASTER = "civicrm-master";
+  public static $SYNC_MODE_REMOTE_MASTER = "remote-master";
 
   private $prefix;
 
@@ -184,9 +188,7 @@ class CRM_OauthSync_SyncHelper {
       'civicrm_oauthsync_' . $this->prefix . '_get_remote_user_list'
     );
 
-    print("\ngroupMembers\n");
     print_r($groupMembers);
-    print("\ncontacts\n");
     print_r($groupContacts);
     // do a diff and get the groups in sync in a none destructive manner
     $toAddLocal = array_diff($groupMembers, $groupContacts);
@@ -205,7 +207,6 @@ class CRM_OauthSync_SyncHelper {
         $this->protectedDeleteInProgress = false;
       }
     } else {
-      print "remote is not master";
       # we don't need to remove any users here
       $emptyArray = array();
       // add the remote members

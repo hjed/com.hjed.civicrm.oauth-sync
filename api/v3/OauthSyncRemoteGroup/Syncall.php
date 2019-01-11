@@ -33,6 +33,7 @@ function civicrm_api3_oauth_sync_remote_group_Syncall($params) {
   $returnValues = array();
   foreach ($helpers as $helper) {
     $syncHelper = CRM_OauthSync_SyncHelper::getInstance($helper->settingsPrefix);
+    $syncHelper->triggerUpdateGroupsListHook();
     $params = array();
     $groups = CRM_Contact_BAO_Group::getGroupList($params);
 

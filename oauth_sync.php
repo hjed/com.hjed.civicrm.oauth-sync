@@ -230,10 +230,8 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
         $prefix = $helper->settingsPrefix;
         $remoteGroup = CRM_OauthSync_SyncHelper::getInstance($prefix)->getRemoteGroup($objectId, $customFields);
-        print_r($remoteGroup);
         if ($remoteGroup != null) {
           // we have groups
-          print_r($remoteGroup);
           CRM_OauthSync_SyncHelper::getInstance($prefix)->syncGroup($objectId, $remoteGroup, false);
 
         }

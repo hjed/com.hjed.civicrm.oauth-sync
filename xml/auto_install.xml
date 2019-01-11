@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<CustomData>
+    <OptionGroups>
+        <OptionGroup>
+            <name>oauth_sync_modes</name>
+            <title>OAuth Sync Modes</title>
+            <data_type>String</data_type>
+            <is_reserved>1</is_reserved>
+            <is_active>1</is_active>
+        </OptionGroup>
+    </OptionGroups>
+    <OptionValues>
+        <OptionValue>
+            <label>Two Way Sync</label>
+            <name>two-way</name>
+            <value>two-way</value>
+            <is_default>1</is_default>
+            <weight>4</weight>
+            <is_optgroup>0</is_optgroup>
+            <is_reserved>1</is_reserved>
+            <is_active>1</is_active>
+            <option_group_name>oauth_sync_modes</option_group_name>
+        </OptionValue>
+        <OptionValue>
+            <label>Civicrm is Master</label>
+            <name>civicrm-master</name>
+            <value>civicrm-master</value>
+            <is_default>1</is_default>
+            <weight>4</weight>
+            <is_optgroup>0</is_optgroup>
+            <is_reserved>1</is_reserved>
+            <is_active>1</is_active>
+            <option_group_name>oauth_sync_modes</option_group_name>
+        </OptionValue>
+        <OptionValue>
+            <label>Remote is Master</label>
+            <name>remote-master</name>
+            <value>remote-master</value>
+            <is_default>1</is_default>
+            <weight>4</weight>
+            <is_optgroup>0</is_optgroup>
+            <is_reserved>1</is_reserved>
+            <is_active>1</is_active>
+            <option_group_name>oauth_sync_modes</option_group_name>
+        </OptionValue>
+    </OptionValues>
+</CustomData>
