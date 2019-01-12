@@ -165,17 +165,26 @@ class CRM_OauthSync_SyncHelper {
    * @param bool $remoteIsMaster if we should remove contacts that don't exist in the
    *  the remote group. If false this function performs a union of the two groups, if
    *  true this function causes the local group to exactly match the remote group.
+   *  ***Provided that the group supports syncing in that direction***
    * @return array the users added to local and the users that weren't on the remote as well as their parents
    */
   public function syncGroup($localGroupId, $remoteGroup, $remoteIsMaster = false) {
+    // calculate the sync mode
+    $syncModeFieldId = CRM_Core_BAO_CustomField::getCustomFieldID($this->prefix . "_sync_mode");
+    $customFields = CRM_Core_BAO_CustomValueTable::getEntityValues($localGroupId, 'Group', NULL, TRUE);
+    $syncMode = $syncModeFieldId[$customFields];
+    if($syncMode == null) {
+      // two way sync is default
+      $syncMode = self::$SYNC_MODE_TWO_WAY;
+    }
+
+
     // retrieve this each time for consistency
     $groupContacts = CRM_Contact_BAO_Group::getGroupContacts($localGroupId);
     // the getGroupContacts method returns a list of contact objects containing just their ids
     // their ids are also the keys of the array.
     $groupContacts = array_keys($groupContacts);
 
-    print("group contacts");
-    print_r($groupContacts);
     $groupMembers = array();
     CRM_Utils_Hook::singleton()->invoke(
       array('remoteGroupName', 'members'),
@@ -188,25 +197,26 @@ class CRM_OauthSync_SyncHelper {
       'civicrm_oauthsync_' . $this->prefix . '_get_remote_user_list'
     );
 
-    print_r($groupMembers);
-    print_r($groupContacts);
     // do a diff and get the groups in sync in a none destructive manner
     $toAddLocal = array_diff($groupMembers, $groupContacts);
     $usersNotOnRemote = array_diff($groupContacts, $groupMembers);
-    print_r($usersNotOnRemote);
-    print_r($toAddLocal);
 
-    CRM_Contact_BAO_GroupContact::addContactsToGroup($toAddLocal, $localGroupId);
+    // add contacts to the group if the remote is master or we are doing a two way sync
+    if($syncMode == self::$SYNC_MODE_REMOTE_MASTER || $syncMode == self::$SYNC_MODE_TWO_WAY) {
+      CRM_Contact_BAO_GroupContact::addContactsToGroup($toAddLocal, $localGroupId);
+    }
 
     if($remoteIsMaster) {
-      $this->protectedDeleteInProgress = true;
-      try {
-        // remove the contacts not in the remote group
-        CRM_Contact_BAO_GroupContact::removeContactsFromGroup($usersNotOnRemote, $localGroupId);
-      } finally {
-        $this->protectedDeleteInProgress = false;
+      if($syncMode == self::$SYNC_MODE_REMOTE_MASTER || $syncMode == self::$SYNC_MODE_TWO_WAY) {
+        $this->protectedDeleteInProgress = true;
+        try {
+          // remove the contacts not in the remote group
+          CRM_Contact_BAO_GroupContact::removeContactsFromGroup($usersNotOnRemote, $localGroupId);
+        } finally {
+          $this->protectedDeleteInProgress = false;
+        }
       }
-    } else {
+    } else if($syncMode == self::$SYNC_MODE_TWO_WAY || $syncMode == self::$SYNC_MODE_CIVICRM_MASTER) {
       # we don't need to remove any users here
       $emptyArray = array();
       // add the remote members
@@ -242,7 +252,6 @@ class CRM_OauthSync_SyncHelper {
    * @param array $newGroupsList the new list of remote groups
    */
   public function updateRemoteGroupsList($newGroupsList) {
-    print_r($newGroupsList);
     $current_list = $this->getCachedRemoteGroups();
     $added = array_diff($newGroupsList, $current_list);
     $removed = array_diff($current_list, $newGroupsList);
@@ -266,20 +275,22 @@ class CRM_OauthSync_SyncHelper {
       'civicrm_oauthsync_' . $this->prefix . '_sync_groups_list'
     );
 
-    print 'civicrm_oauthsync_' . $this->prefix . '_sync_groups_list';
     $this->updateRemoteGroupsList($newGroupsList);
-    die();
   }
 
   /**
    * Finds all remote groups
    * @param $localGroupId the local group to check
+   * @param $requireSyncToRemote if we should only return groups that can sync to remote
+   * @param $requireSyncToLocal if we should only return groups that can sync to local
    * @return array the remote groups reltated to this group (including those related through its parents)
    * @throws CiviCRM_API3_Exception
    */
-  public function getRemoteGroupsIncludingParents($localGroupId) {
+  public function getRemoteGroupsIncludingParents($localGroupId, $requireSyncToRemote, $requireSyncToLocal) {
     $allLocal = array($localGroupId);
     $next = array($localGroupId);
+    $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($this->prefix . "_sync_settings");
+    $modeFieldId = CRM_Core_BAO_CustomField::getCustomFieldID($this->prefix . "_sync_mode");
     while($next = CRM_Contact_BAO_GroupNesting::getParentGroupIds($next)) {
       $allLocal = array_merge($next, $allLocal);
     }
@@ -295,11 +306,16 @@ class CRM_OauthSync_SyncHelper {
       );
       
       // we only care about groups that have a remote counter part
-      $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($this->prefix . "_sync_settings");
 
       $remoteGroup = $groupCustomFields[$groupsId];
       if($remoteGroup != null) {
-        $remoteGroups[] = $remoteGroup;
+        $syncMode = $groupCustomFields[$modeFieldId];
+        if(
+          ($requireSyncToRemote && ($syncMode == self::$SYNC_MODE_CIVICRM_MASTER || $syncMode == self::$SYNC_MODE_TWO_WAY)) ||
+          ($requireSyncToLocal && ($syncMode == self::$SYNC_MODE_REMOTE_MASTER || $syncMode == self::$SYNC_MODE_TWO_WAY))
+        ){
+            $remoteGroups[] = $remoteGroup;
+        }
       }
     }
     return $remoteGroups;

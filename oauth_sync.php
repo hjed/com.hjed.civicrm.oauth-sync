@@ -247,7 +247,7 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
         $prefix = $helper->settingsPrefix;
         $syncHelper = CRM_OauthSync_SyncHelper::getInstance($prefix);
 
-        $remoteGroups = $syncHelper->getRemoteGroupsIncludingParents($localGroupId);
+        $remoteGroups = $syncHelper->getRemoteGroupsIncludingParents($localGroupId, true, false);
 
         foreach($remoteGroups as $remoteGroup) {
           # we don't need to remove any users here
@@ -270,16 +270,13 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
       foreach (CRM_OauthSync_OAuthHelper::getHelperArray() as $helper) {
         $prefix = $helper->settingsPrefix;
         $syncHelper = CRM_OauthSync_SyncHelper::getInstance($prefix);
-        print($prefix);
-        print("\n");
 
         // if this hook was triggered by a server side delete don't send it back to the server
         if($syncHelper->protectedDeleteInProgress) {
-          print("protected");
           continue;
         }
 
-        $remoteGroups = $syncHelper->getRemoteGroupsIncludingParents($localGroupId);
+        $remoteGroups = $syncHelper->getRemoteGroupsIncludingParents($localGroupId, true, false);
 
         foreach($remoteGroups as $remoteGroup) {
           # we don't need to remove any users here
@@ -298,7 +295,6 @@ function oauth_sync_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
           );
         }
       }
-      die();
     }
   }
   

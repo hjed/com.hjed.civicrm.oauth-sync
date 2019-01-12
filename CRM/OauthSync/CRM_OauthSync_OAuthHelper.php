@@ -207,7 +207,6 @@ class CRM_OauthSync_OAuthHelper {
       // TODO: handle this better
     } else {
 
-      print_r($response);
       $response_json = json_decode($response, true);
       if (in_array("error", $response_json)) {
         // TODO: handle this better
@@ -225,7 +224,6 @@ class CRM_OauthSync_OAuthHelper {
    * Refresh the access token
    */
   public function refreshAccessToken() {
-    print("refreshing");
     $jsonBody = array(
       'refresh_token' => $this->getPrefixSetting('refresh')
     );
@@ -241,8 +239,6 @@ class CRM_OauthSync_OAuthHelper {
    * @param $curl_request
    */
   public function addAccessToken(&$curl_request) {
-    // TODO: check expiry and refresh
-    print "<br/> exp: " . $this->getPrefixSetting('expiry') . ' time ' . time();
     if($this->getPrefixSetting("expiry") <= time()) {
       $this->refreshAccessToken();
     }
@@ -255,7 +251,6 @@ class CRM_OauthSync_OAuthHelper {
         'Content-Type: application/json'
       )
     );
-    print 'Authorization: Bearer ' . $this->getPrefixSetting('token');
 
   }
 

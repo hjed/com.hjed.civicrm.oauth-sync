@@ -11,12 +11,10 @@ class CRM_OauthSync_Page_OAuthCallback extends CRM_Core_Page {
     // TODO: verify input
     $prefix = $state_array[0];
     $state = $state_array[1];
-    print_r($state_array);
     $helper = CRM_OauthSync_OAuthHelper::getHelper($prefix);
     //verify the callback
     if($helper->verifyState($state)) {
       $helper->doOAuthCodeExchange($_GET['code']);
-      echo "success";
     } else {
       echo "error";
     }
