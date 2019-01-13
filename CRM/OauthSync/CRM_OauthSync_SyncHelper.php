@@ -180,7 +180,7 @@ class CRM_OauthSync_SyncHelper {
 
 
     // retrieve this each time for consistency
-    $groupContacts = CRM_Contact_BAO_Group::getGroupContacts($localGroupId);
+    $groupContacts = CRM_Contact_BAO_Group::getMember($localGroupId);
     // the getGroupContacts method returns a list of contact objects containing just their ids
     // their ids are also the keys of the array.
     $groupContacts = array_keys($groupContacts);
