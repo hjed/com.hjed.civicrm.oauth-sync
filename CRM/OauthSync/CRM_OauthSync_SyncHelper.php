@@ -172,7 +172,7 @@ class CRM_OauthSync_SyncHelper {
     // calculate the sync mode
     $syncModeFieldId = CRM_Core_BAO_CustomField::getCustomFieldID($this->prefix . "_sync_mode");
     $customFields = CRM_Core_BAO_CustomValueTable::getEntityValues($localGroupId, 'Group', NULL, TRUE);
-    $syncMode = $syncModeFieldId[$customFields];
+    $syncMode = $customFields[$syncModeFieldId];
     if($syncMode == null) {
       // two way sync is default
       $syncMode = self::$SYNC_MODE_TWO_WAY;
@@ -205,6 +205,7 @@ class CRM_OauthSync_SyncHelper {
     if($syncMode == self::$SYNC_MODE_REMOTE_MASTER || $syncMode == self::$SYNC_MODE_TWO_WAY) {
       CRM_Contact_BAO_GroupContact::addContactsToGroup($toAddLocal, $localGroupId);
     }
+    $removedLocalUsers = false;
 
     if($remoteIsMaster) {
       if($syncMode == self::$SYNC_MODE_REMOTE_MASTER || $syncMode == self::$SYNC_MODE_TWO_WAY) {
@@ -212,6 +213,7 @@ class CRM_OauthSync_SyncHelper {
         try {
           // remove the contacts not in the remote group
           CRM_Contact_BAO_GroupContact::removeContactsFromGroup($usersNotOnRemote, $localGroupId);
+          $removedLocalUsers = true;
         } finally {
           $this->protectedDeleteInProgress = false;
         }
@@ -233,7 +235,9 @@ class CRM_OauthSync_SyncHelper {
     }
     $output =  array(
       'added_to_local' => $toAddLocal,
-      'users_not_on_remote' => $usersNotOnRemote
+      'users_not_on_remote' => $usersNotOnRemote,
+      'mode' => $syncMode,
+      'removed_locally' => $removedLocalUsers
     );
 
     if(CRM_Contact_BAO_GroupNesting::hasParentGroups($localGroupId)) {
