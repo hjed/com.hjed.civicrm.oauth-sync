@@ -54,6 +54,8 @@ abstract class CRM_OauthSync_Form_ConnectionSettings extends CRM_Core_Form {
     ));
     // export form elements
     $this->assign('elementNames', $this->getRenderableElementNames());
+    $redirect_url= CRM_OauthSync_OAuthHelper::generateRedirectUrl();
+    $this->assign("redirect_url", $redirect_url);
 
     parent::buildQuickForm();
   }
@@ -124,14 +126,6 @@ abstract class CRM_OauthSync_Form_ConnectionSettings extends CRM_Core_Form {
   }
 
   function getTemplateFileName() {
-
-
-
-//    $ext = CRM_Extension_System::singleton()->getMapper();
-//
-//    $filename = $ext->gettemplatename(self::class);
-//    $tplname = $ext->gettemplatepath(self::class) . directory_separator . $filename;
-
     $tplname = __DIR__ . '/../../../templates/CRM/OauthSync/Form/ConnectionSettings.tpl';
     return $tplname;
   }
