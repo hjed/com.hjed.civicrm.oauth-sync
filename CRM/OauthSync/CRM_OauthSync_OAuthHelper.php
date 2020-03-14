@@ -109,6 +109,16 @@ class CRM_OauthSync_OAuthHelper {
     );
     $success = $this->doOAuthTokenRequest('authorization_code', $requestJsonDict);
     if($success) {
+      $this->doAuthCodeExchangeSuccess();
+    }
+
+  }
+
+  /**
+   * Handles a successful oauth code exchange, called by doOAuthCodeExchange
+   */
+  public function doOAuthCodeExchangeSuccess() {
+
       CRM_Utils_Hook::singleton()->invoke(
         array('prefix'),
         $this->settingsPrefix,
@@ -128,8 +138,6 @@ class CRM_OauthSync_OAuthHelper {
       $return_path = CRM_Utils_System::url($this->getPrefixSetting('callback_return_path'), 'reset=1', TRUE, NULL, FALSE, FALSE);
       header("Location: " . $return_path);
       die();
-    }
-
   }
 
   /**

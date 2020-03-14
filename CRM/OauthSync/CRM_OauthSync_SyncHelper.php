@@ -211,7 +211,7 @@ class CRM_OauthSync_SyncHelper {
       if($syncMode == self::$SYNC_MODE_REMOTE_MASTER || $syncMode == self::$SYNC_MODE_TWO_WAY) {
         $this->protectedDeleteInProgress = true;
         try {
-          // remove the contacts not in the remote group
+          // remove the contacts not in the local group
           CRM_Contact_BAO_GroupContact::removeContactsFromGroup($usersNotOnRemote, $localGroupId);
           $removedLocalUsers = true;
         } finally {
