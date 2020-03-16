@@ -29,7 +29,7 @@ class CRM_OauthSync_SyncHelper {
       self::$singletons = array();
     }
 
-    if(self::$singletons[$prefix] == null) {
+    if(!key_exists($prefix, self::$singletons) || self::$singletons[$prefix] == null) {
       self::$singletons[$prefix] = new CRM_OauthSync_SyncHelper($prefix);
     }
     return self::$singletons[$prefix];
@@ -153,7 +153,7 @@ class CRM_OauthSync_SyncHelper {
     }
 
     $groupsId = CRM_Core_BAO_CustomField::getCustomFieldID($this->prefix . "_sync_settings");
-    return $customFields[$groupsId];
+    return key_exists($groupsId, $customFields) ? $customFields[$groupsId] : null;
   }
 
   /**
@@ -211,9 +211,15 @@ class CRM_OauthSync_SyncHelper {
       if($syncMode == self::$SYNC_MODE_REMOTE_MASTER || $syncMode == self::$SYNC_MODE_TWO_WAY) {
         $this->protectedDeleteInProgress = true;
         try {
-          // remove the contacts not in the local group
-          CRM_Contact_BAO_GroupContact::removeContactsFromGroup($usersNotOnRemote, $localGroupId);
-          $removedLocalUsers = true;
+          if(count($usersNotOnRemote) > 0) {
+            // remove the contacts not in the remote group
+            \Civi\Api4\GroupContact::update()
+              ->addWhere('group_id', '=', $localGroupId)
+              ->addWhere('contact_id', 'IN', $usersNotOnRemote)
+              ->addValue('status', 'Removed')
+              ->execute();
+            $removedLocalUsers = true;
+          }
         } finally {
           $this->protectedDeleteInProgress = false;
         }
@@ -244,7 +250,10 @@ class CRM_OauthSync_SyncHelper {
       $output['parent'] = array();
       $parents = CRM_Contact_BAO_GroupNesting::getParentGroupIds($localGroupId);
       foreach ($parents as $parent) {
-        $this->syncGroup($parent, $this->getRemoteGroup($parent) , $remoteIsMaster);
+        $remoteGroup = $this->getRemoteGroup($parent);
+        if($remoteGroup != null) {
+          $this->syncGroup($parent, $remoteGroup, $remoteIsMaster);
+        }
       }
     }
 

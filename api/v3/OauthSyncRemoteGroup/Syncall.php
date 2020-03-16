@@ -42,10 +42,13 @@ function civicrm_api3_oauth_sync_remote_group_Syncall($params) {
     $returnValues[$helper->settingsPrefix]["custom_field_id"] = $remoteGroupFieldId;
     foreach (array_keys($groups) as $groupId) {
       $customFields = CRM_Core_BAO_CustomValueTable::getEntityValues($groupId, 'Group', NULL, TRUE);
-      $returnValues[$helper->settingsPrefix][$groupId]["remote_group"] = $customFields[$remoteGroupFieldId];
-      if($customFields[$remoteGroupFieldId] != null) {
+      $returnValues[$helper->settingsPrefix][$groupId] = array();
+      if(key_exists($remoteGroupFieldId, $customFields) && $customFields[$remoteGroupFieldId] != null) {
+        $returnValues[$helper->settingsPrefix][$groupId]["remote_group"] = $customFields[$remoteGroupFieldId];
         $remoteGroup = $customFields[$remoteGroupFieldId];
         $returnValues[$helper->settingsPrefix][$groupId]["results"] = $syncHelper->syncGroup($groupId, $remoteGroup, true);
+        print($groupId);
+        print("synced");
       }
     }
   }
